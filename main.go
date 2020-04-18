@@ -74,11 +74,12 @@ func genQuestions(size int) []question {
 	for j := 0; j < size; j++ {
 		q := make([]int, per_q)
 		ans := make([]int, per_q)
-		start := genRandomInt(randomIntMinMax{min: 200, max: 1000})
-		incredby := genRandomInt(randomIntMinMax{min: 1, max: 10})
+		start := genRandomInt(randomIntMinMax{min: 300, max: 1000})
+		incredby := genRandomInt(randomIntMinMax{min: 10, max: 50})
 		removeby := genRandomInt(randomIntMinMax{min: 0, max: per_q - 1})
 		q[0] = start
 
+		fmt.Println(start, incredby, start%2)
 		for i := 0; i < per_q; i++ {
 			if start%2 == 0 {
 				q[i] = start + incredby*i

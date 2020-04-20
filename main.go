@@ -40,16 +40,16 @@ func main() {
 
 	r.POST("/submit", func(c *gin.Context) {
 		var returnList = []question{}
-		has_error := false
+		hasError := false
 		answers := c.PostFormArray("answers")
 
 		for i, s := range answers {
 			ss, _ := strconv.Atoi(s)
-			is_correct := correctAnswer(ss, answerList[i].Numbers, answerList[i].QID)
-			if is_correct {
+			isCorrect := correctAnswer(ss, answerList[i].Numbers, answerList[i].QID)
+			if isCorrect {
 				returnList = append(returnList, answerList[i])
 			} else {
-				has_error = true
+				hasError = true
 				returnList = append(returnList, questionList[i])
 			}
 		}
@@ -62,7 +62,7 @@ func main() {
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":        "Math Land",
 			"payload":      returnList,
-			"has_error":    has_error,
+			"has_error":    hasError,
 			"just_started": false,
 		})
 	})
@@ -70,17 +70,17 @@ func main() {
 }
 
 func genQuestions(size int) []question {
-	per_q := 6
+	perQ := 6
 	for j := 0; j < size; j++ {
-		q := make([]int, per_q)
-		ans := make([]int, per_q)
+		q := make([]int, perQ)
+		ans := make([]int, perQ)
 		start := genRandomInt(randomIntMinMax{min: 300, max: 1000})
 		incredby := genRandomInt(randomIntMinMax{min: 10, max: 50})
-		removeby := genRandomInt(randomIntMinMax{min: 0, max: per_q - 1})
+		removeby := genRandomInt(randomIntMinMax{min: 0, max: perQ - 1})
 		q[0] = start
 
 		fmt.Println(start, incredby, start%2)
-		for i := 0; i < per_q; i++ {
+		for i := 0; i < perQ; i++ {
 			if start%2 == 0 {
 				q[i] = start + incredby*i
 			} else {

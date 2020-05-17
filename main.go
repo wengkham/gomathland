@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
@@ -13,43 +12,45 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var questionList = []question{}
-var answerList = []question{}
+var questionMemTable = map[int64][]question{}
+var answerMemTable = map[int64][]question{}
 
 func main() {
 	r := gin.Default()
 	r.LoadHTMLGlob("templates/*")
 
 	r.GET("/", func(c *gin.Context) {
-		questionList = []question{}
-		answerList = []question{}
-
 		qno := c.DefaultQuery("q", "10")
 		iqno, _ := strconv.Atoi(qno)
-		questions := genQuestions(iqno)
-
-		fmt.Println(answerList)
+		sid := genQuestions(iqno)
+		questions := questionMemTable[sid]
 
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":        "Math Land",
 			"payload":      questions,
-			"has_error":    true,
+			"sid":          sid,
+			"hasError":     true,
 			"just_started": true,
 		})
 	})
 
 	r.POST("/submit", func(c *gin.Context) {
 		var returnList = []question{}
-		has_error := false
+		hasError := false
 		answers := c.PostFormArray("answers")
+		sid, _ := strconv.Atoi(c.PostForm("sid"))
+		id := int64(sid)
+
+		answerList := answerMemTable[id]
+		questionList := questionMemTable[id]
 
 		for i, s := range answers {
 			ss, _ := strconv.Atoi(s)
-			is_correct := correctAnswer(ss, answerList[i].Numbers, answerList[i].QID)
-			if is_correct {
+			isCorrect := correctAnswer(ss, answerList[i].Numbers, answerList[i].QID)
+			if isCorrect {
 				returnList = append(returnList, answerList[i])
 			} else {
-				has_error = true
+				hasError = true
 				returnList = append(returnList, questionList[i])
 			}
 		}
@@ -57,30 +58,30 @@ func main() {
 		rl, _ := json.Marshal(returnList)
 		saveResult(string(rl))
 
-		fmt.Println(returnList)
-
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"title":        "Math Land",
 			"payload":      returnList,
-			"has_error":    has_error,
+			"hasError":     hasError,
+			"sid":          sid,
 			"just_started": false,
 		})
 	})
 	r.Run() // listen and serve on 0.0.0.0:8080
 }
 
-func genQuestions(size int) []question {
-	per_q := 6
+func genQuestions(size int) int64 {
+	questionList := []question{}
+	answerList := []question{}
+	perQ := 6
 	for j := 0; j < size; j++ {
-		q := make([]int, per_q)
-		ans := make([]int, per_q)
+		q := make([]int, perQ)
+		ans := make([]int, perQ)
 		start := genRandomInt(randomIntMinMax{min: 300, max: 1000})
 		incredby := genRandomInt(randomIntMinMax{min: 10, max: 50})
-		removeby := genRandomInt(randomIntMinMax{min: 0, max: per_q - 1})
+		removeby := genRandomInt(randomIntMinMax{min: 0, max: perQ - 1})
 		q[0] = start
 
-		fmt.Println(start, incredby, start%2)
-		for i := 0; i < per_q; i++ {
+		for i := 0; i < perQ; i++ {
 			if start%2 == 0 {
 				q[i] = start + incredby*i
 			} else {
@@ -99,7 +100,9 @@ func genQuestions(size int) []question {
 		answerList = append(answerList, anss)
 	}
 
-	return questionList
+	id := createMemTable(questionList, answerList)
+
+	return id
 }
 
 func genRandomInt(p randomIntMinMax) int {
@@ -126,6 +129,16 @@ func saveResult(content string) {
 	if _, err := file.WriteString(content); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func createMemTable(questions []question, answer []question) int64 {
+	now := time.Now()
+	sec := now.Unix()
+
+	questionMemTable[sec] = questions
+	answerMemTable[sec] = answer
+
+	return sec
 }
 
 type randomIntMinMax struct {

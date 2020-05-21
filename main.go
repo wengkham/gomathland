@@ -76,7 +76,7 @@ func genQuestions(size int) int64 {
 	for j := 0; j < size; j++ {
 		q := make([]int, perQ)
 		ans := make([]int, perQ)
-		start := genRandomInt(randomIntMinMax{min: 300, max: 1000})
+		start := genRandomInt(randomIntMinMax{min: 1200, max: 2400})
 		incredbyMax := start / perQ
 		incredby := genRandomInt(randomIntMinMax{min: incredbyMax / 2, max: incredbyMax})
 		removeby := genRandomInt(randomIntMinMax{min: 0, max: perQ - 1})
